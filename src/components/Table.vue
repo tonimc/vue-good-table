@@ -18,7 +18,7 @@
       <table ref="table" :class="styleClass">
         <thead>
           <tr v-if="globalSearch && externalSearchQuery == null">
-            <td :colspan="lineNumbers ? columns.length + 1: columns.length">
+            <td :colspan="columnsLength">
               <div class="global-search">
                 <span class="global-search-icon">
                   <img src="../images/search_icon.png" alt="Search Icon" />
@@ -29,6 +29,11 @@
           </tr>
           <tr>
             <th v-if="lineNumbers" class="line-numbers"></th>
+            <th v-if="selectable" class="selectable">
+              <slot name="thead-selectable">
+                <input type="checkbox">
+              </slot>
+            </th>
             <th v-for="(column, index) in columns"
               :key="column.field"
               @click="sort(index)"
@@ -43,10 +48,12 @@
           </tr>
           <tr v-if="hasFilterRow">
             <th v-if="lineNumbers"></th>
+            <th v-if="selectable" class="selectable">
+            </th>
             <th v-for="(column, index) in columns"
               :key="column.field"
               v-if="!column.hidden">
-              <div v-if="column.filterable" 
+              <div v-if="column.filterable"
                 :class="getHeaderClasses(column, index)">
                 <input v-if="!column.filterDropdown"
                   type="text"
@@ -75,7 +82,7 @@
                   :value="columnFilters[column.field]"
                   v-on:input="updateFilters(column, $event.target.value)">
                   <option value="">{{ getPlaceholder(column) }}</option>
-                  <option 
+                  <option
                     v-for="option in column.filterOptions"
                     :key="option"
                     :value="option.value">{{ option.text }}</option>
@@ -86,17 +93,22 @@
         </thead>
 
         <tbody>
-          <tr 
+          <tr
             v-for="(row, index) in paginated"
             :key="index"
-            :class="getRowStyleClass(row)" 
+            :class="getRowStyleClass(row)"
             @click="click(row, index)">
             <th v-if="lineNumbers" class="line-numbers">{{ getCurrentIndex(index) }}</th>
+            <td v-if="selectable" class="selectable">
+              <slot name="table-row-selectable">
+                <input type="checkbox">
+              </slot>
+            </td>
             <slot name="table-row-before" :row="row" :index="index"></slot>
             <slot name="table-row" :row="row" :formattedRow="formattedRow(row)" :index="index">
-              <td 
+              <td
                 v-for="(column, i) in columns"
-                :key="column.field" 
+                :key="column.field"
                 :class="getClasses(i, 'td')"
                 v-if="!column.hidden && column.field">
                 <span v-if="!column.html">{{ collectFormatted(row, column) }}</span>
@@ -131,7 +143,7 @@
 <script>
   import {format, parse, compareAsc, isValid} from 'date-fns/esm'
   import VueGoodPagination from './Pagination.vue'
-  
+
   export default {
     name: 'vue-good-table',
     components: {
@@ -145,6 +157,7 @@
       onClick: {},
       perPage: {},
       sortable: {default: true},
+      selectable: {default: false},
       paginate: {default: false},
       paginateOnTop: {default: false},
       lineNumbers: {default: false},
@@ -547,6 +560,12 @@
           paginatedRows = paginatedRows.slice(pageStart, pageEnd);
         }
         return paginatedRows;
+      },
+
+      columnsLength() {
+        const numbers = lineNumbers ? 1 : 0;
+        const checboxs = selectable ? 1 : 0;
+        return columns.length + numbers + checboxs;
       }
     },
 
@@ -629,13 +648,13 @@
       border: 1px solid #DDD;
   }
 
-  .table td, .table th:not(.line-numbers) {
+  .table td, .table th:not(.line-numbers):not(.selectable) {
     padding: .75rem 1.5rem .75rem .75rem;
     vertical-align: top;
     border-top: 1px solid #ddd;
   }
 
-  .rtl .table td, .rtl .table th:not(.line-numbers) {
+  .rtl .table td, .rtl .table th:not(.line-numbers):not(.selectable) {
     padding: .75rem .75rem .75rem 1.5rem;
   }
 
@@ -658,7 +677,7 @@
     cursor: pointer;
   }
 
-  .table input, .table select{
+  .table input:not([type=checkbox]), .table select{
     box-sizing: border-box;
     display: block;
     width: calc(100%);
@@ -764,6 +783,18 @@
   **********************************************/
   table th.line-numbers, .table.condensed th.line-numbers{
     background-color: rgba(35,41,53,0.05);
+    padding-left:  3px;
+    padding-right:  3px;
+    word-wrap: break-word;
+    width: 45px;
+    text-align: center;
+  }
+
+  /* Selectable
+  **********************************************/
+  table th.selectable, td.selectable {
+    background-color: rgba(35,41,53,0.05);
+    padding: .75rem .75rem .75rem 1.5rem;
     padding-left:  3px;
     padding-right:  3px;
     word-wrap: break-word;
