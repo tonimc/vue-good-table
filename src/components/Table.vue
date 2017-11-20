@@ -30,9 +30,7 @@
           <tr>
             <th v-if="lineNumbers" class="line-numbers"></th>
             <th v-if="selectable" class="selectable">
-              <slot name="thead-selectable">
-                <input type="checkbox">
-              </slot>
+              <input type="checkbox" :checked="selectedRows.length === filteredRows.length" @click="selectAllClicked">
             </th>
             <th v-for="(column, index) in columns"
               :key="column.field"
@@ -100,9 +98,7 @@
             @click="click(row, index)">
             <th v-if="lineNumbers" class="line-numbers">{{ getCurrentIndex(index) }}</th>
             <td v-if="selectable" class="selectable">
-              <slot name="table-row-selectable">
-                <input type="checkbox">
-              </slot>
+              <input type="checkbox" :checked="isRowSelected(row)" @click="selectOneClicked(row, $event.target.checked)">
             </td>
             <slot name="table-row-before" :row="row" :index="index"></slot>
             <slot name="table-row" :row="row" :formattedRow="formattedRow(row)" :index="index">
@@ -118,7 +114,7 @@
             <slot name="table-row-after" :row="row" :index="index"></slot>
           </tr>
           <tr v-if="processedRows.length === 0">
-            <td :colspan="columns.length">
+            <td :colspan="columnsLength">
               <slot name="emptystate">
                 <div class="center-align text-disabled">
                   No data for table.
@@ -183,6 +179,7 @@
       globalSearchTerm: '',
       columnFilters: {},
       filteredRows: [],
+      selectedRows: [],
       timer: null,
       forceSearch: false,
       sortChanged: false,
@@ -373,6 +370,7 @@
           }
         }
         this.filteredRows = computedRows;
+        this.updateSelectedRows();
       },
 
       //get column's defined placeholder or default one
@@ -398,6 +396,46 @@
           classes += ' ' + rowStyleClasses;
         }
         return classes;
+      },
+
+      selectAllClicked(event) {
+        const checked = event.target.checked;
+        if (checked) {
+          this.selectedRows = this.filteredRows.map(item => item.originalIndex);
+        } else {
+          this.selectedRows = [];
+        }
+        this.selectedRowsChanged();
+      },
+
+      selectOneClicked(item, checked) {
+        if (checked) {
+          this.selectedRows.push(item.originalIndex);
+        } else {
+          this.selectedRows.splice(this.selectedRows.findIndex(index  => item.originalIndex === index), 1);
+        }
+        this.selectedRowsChanged();
+      },
+
+      isRowSelected(item) {
+        return this.selectedRows.indexOf(item.originalIndex) >= 0;
+      },
+
+      selectedRowsChanged() {
+        this.$emit('selectedRows', {selectedRows: this.selectedRows.map(index => this.rows[index])});
+      },
+
+      updateSelectedRows() {
+        const newSelectedRows = [];
+        this.filteredRows.forEach(item => {
+          if (this.selectedRows.indexOf(item.originalIndex) > -1) {
+            newSelectedRows.push(item.originalIndex);
+          }
+        });
+        if (newSelectedRows.length !== this.selectedRows.length ) {
+          this.selectedRows = newSelectedRows;
+          this.selectedRowsChanged();
+        }
       }
     },
 
@@ -414,7 +452,6 @@
         },
         deep: true
       }
-
     },
 
     computed: {
@@ -563,9 +600,9 @@
       },
 
       columnsLength() {
-        const numbers = lineNumbers ? 1 : 0;
-        const checboxs = selectable ? 1 : 0;
-        return columns.length + numbers + checboxs;
+        const numbers = this.lineNumbers ? 1 : 0;
+        const checboxs = this.selectable ? 1 : 0;
+        return this.columns.length + numbers + checboxs;
       }
     },
 
