@@ -30,7 +30,7 @@
           <tr>
             <th v-if="lineNumbers" class="line-numbers"></th>
             <th v-if="selectable" class="selectable">
-              <input type="checkbox" :checked="selectedRows.length === filteredRows.length" @click="selectAllClicked">
+              <input type="checkbox" :disabled="!selectedRows.length" :checked="selectedRows.length > 0 && selectedRows.length === filteredRows.length" @click="selectAllClicked">
             </th>
             <th v-for="(column, index) in columns"
               :key="column.field"
@@ -837,6 +837,10 @@
     word-wrap: break-word;
     width: 45px;
     text-align: center;
+  }
+
+  table th.selectable input[disabled], td.selectable input[disabled] {
+    cursor: not-allowed;
   }
 
   .good-table.rtl{
