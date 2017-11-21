@@ -331,11 +331,7 @@
 
       //method to filter rows
       filterRows() {
-        var computedRows = JSON.parse(JSON.stringify(this.rows));
-        // we need to preserve the original index of rows so lets do that
-        for(const [index, row] of computedRows.entries()) {
-          row.originalIndex = index;
-        }
+        var computedRows = this.originalRows;
 
         if(this.hasFilterRow) {
           for (var col of this.columns){
@@ -504,7 +500,7 @@
         // take care of the global filter here also
         if (this.globalSearchAllowed) {
           var filteredRows = [];
-          for (var row of this.rows) {
+          for (var row of this.originalRows) {
             for(var col of this.columns) {
               if (String(this.collectFormatted(row, col)).toLowerCase()
                   .search(this.searchTerm.toLowerCase()) > -1) {
@@ -603,16 +599,22 @@
         const numbers = this.lineNumbers ? 1 : 0;
         const checboxs = this.selectable ? 1 : 0;
         return this.columns.length + numbers + checboxs;
+      },
+
+      originalRows() {
+        const rows = JSON.parse(JSON.stringify(this.rows));
+
+        // we need to preserve the original index of rows so lets do that
+        for(const [index, row] of rows.entries()) {
+          row.originalIndex = index;
+        }
+
+        return rows;
       }
     },
 
     mounted() {
-      this.filteredRows = JSON.parse(JSON.stringify(this.rows));
-
-      // we need to preserve the original index of rows so lets do that
-      for(const [index, row] of this.filteredRows.entries()) {
-        row.originalIndex = index;
-      }
+      this.filteredRows = this.originalRows;
 
       if (this.perPage) {
         this.currentPerPage = this.perPage;
