@@ -426,16 +426,20 @@
       },
 
       updateSelectedRows() {
-        const newSelectedRows = [];
-        this.filteredRows.forEach(item => {
-          if (this.selectedRows.indexOf(item.originalIndex) > -1) {
-            newSelectedRows.push(item.originalIndex);
-          }
-        });
-        if (newSelectedRows.length !== this.selectedRows.length ) {
-          this.selectedRows = newSelectedRows;
+        if (this.selectedRows.length > 0) {
+          this.selectedRows = [];
           this.selectedRowsChanged();
         }
+//        const newSelectedRows = [];
+//        this.filteredRows.forEach(item => {
+//          if (this.selectedRows.indexOf(item.originalIndex) > -1) {
+//            newSelectedRows.push(item.originalIndex);
+//          }
+//        });
+//        if (newSelectedRows.length !== this.selectedRows.length ) {
+//          this.selectedRows = newSelectedRows;
+//          this.selectedRowsChanged();
+//        }
       }
     },
 
