@@ -30,7 +30,7 @@
           <tr>
             <th v-if="lineNumbers" class="line-numbers"></th>
             <th v-if="selectable" class="selectable">
-              <input type="checkbox" :checked="selectedRows.length === filteredRows.length" @click="selectAllClicked">
+              <input type="checkbox" :disabled="!selectedRows.length" :checked="selectedRows.length > 0 && selectedRows.length === filteredRows.length" @click="selectAllClicked">
             </th>
             <th v-for="(column, index) in columns"
               :key="column.field"
@@ -422,16 +422,20 @@
       },
 
       updateSelectedRows() {
-        const newSelectedRows = [];
-        this.filteredRows.forEach(item => {
-          if (this.selectedRows.indexOf(item.originalIndex) > -1) {
-            newSelectedRows.push(item.originalIndex);
-          }
-        });
-        if (newSelectedRows.length !== this.selectedRows.length ) {
-          this.selectedRows = newSelectedRows;
+        if (this.selectedRows.length > 0) {
+          this.selectedRows = [];
           this.selectedRowsChanged();
         }
+//        const newSelectedRows = [];
+//        this.filteredRows.forEach(item => {
+//          if (this.selectedRows.indexOf(item.originalIndex) > -1) {
+//            newSelectedRows.push(item.originalIndex);
+//          }
+//        });
+//        if (newSelectedRows.length !== this.selectedRows.length ) {
+//          this.selectedRows = newSelectedRows;
+//          this.selectedRowsChanged();
+//        }
       }
     },
 
@@ -839,6 +843,10 @@
     word-wrap: break-word;
     width: 45px;
     text-align: center;
+  }
+
+  table th.selectable input[disabled], td.selectable input[disabled] {
+    cursor: not-allowed;
   }
 
   .good-table.rtl{
