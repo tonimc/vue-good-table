@@ -46,7 +46,7 @@
             <th v-for="(column, index) in columns"
               :key="column.field"
               v-if="!column.hidden">
-              <div v-if="column.filterable" 
+              <div v-if="column.filterable"
                 :class="getHeaderClasses(column, index)">
                 <input v-if="!column.filterDropdown"
                   type="text"
@@ -75,7 +75,7 @@
                   :value="columnFilters[column.field]"
                   v-on:input="updateFilters(column, $event.target.value)">
                   <option value="">{{ getPlaceholder(column) }}</option>
-                  <option 
+                  <option
                     v-for="option in column.filterOptions"
                     :key="option"
                     :value="option.value">{{ option.text }}</option>
@@ -86,21 +86,22 @@
         </thead>
 
         <tbody>
-          <tr 
+          <tr
             v-for="(row, index) in paginated"
             :key="index"
-            :class="getRowStyleClass(row)" 
+            :class="getRowStyleClass(row)"
             @click="click(row, index)">
             <th v-if="lineNumbers" class="line-numbers">{{ getCurrentIndex(index) }}</th>
             <slot name="table-row-before" :row="row" :index="index"></slot>
             <slot name="table-row" :row="row" :formattedRow="formattedRow(row)" :index="index">
-              <td 
+              <td
                 v-for="(column, i) in columns"
-                :key="column.field" 
+                :key="column.field"
                 :class="getClasses(i, 'td')"
                 v-if="!column.hidden && column.field">
-                <span v-if="!column.html">{{ collectFormatted(row, column) }}</span>
                 <span v-if="column.html" v-html="collect(row, column.field)"></span>
+                <router-link v-if="column.route" :to="{ name: column.route.name, params: routeParams(row, column)}">{{ collectFormatted(row, column) }}</router-link>
+                <span v-if="!column.route && !column.html">{{ collectFormatted(row, column) }}</span>
               </td>
             </slot>
             <slot name="table-row-after" :row="row" :index="index"></slot>
@@ -131,7 +132,7 @@
 <script>
   import {format, parse, compareAsc, isValid} from 'date-fns/esm'
   import VueGoodPagination from './Pagination.vue'
-  
+
   export default {
     name: 'vue-good-table',
     components: {
@@ -275,6 +276,14 @@
           }
         }
         return formattedRow;
+      },
+
+      routeParams(obj,  column) {
+        const params = {};
+        for (let param in column.route.params) {
+          params[param] = obj[column.route.params[param]];
+        }
+        return params;
       },
 
       //Check if a column is sortable.
