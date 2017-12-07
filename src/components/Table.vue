@@ -293,7 +293,7 @@
       routeParams(obj,  column) {
         const params = {};
         for (let param in column.route.params) {
-          params[param] = obj[column.route.params[param]];
+          params[param] = obj.hasOwnProperty(column.route.params[param]) ? obj[column.route.params[param]] : column.route.params[param];
         }
         return params;
       },
