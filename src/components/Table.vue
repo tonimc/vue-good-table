@@ -319,7 +319,7 @@
       //Get classes for the given column index & element.
       getClasses(index, element) {
         const { type, [element + 'Class']: custom } = this.columns[index];
-        let isRight = ['number', 'percentage', 'decimal', 'date'].includes(type);
+        let isRight = ['number', 'percentage', 'decimal', 'date'].indexOf(type)>=0;
         if (this.rtl) isRight = true;
         const classes = {
           'right-align': isRight,
