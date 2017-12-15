@@ -620,7 +620,7 @@
         const rows = JSON.parse(JSON.stringify(this.rows));
 
         // we need to preserve the original index of rows so lets do that
-        for(const [index, row] of rows.entries()) {
+        for(const [index, row] of Object.entries(rows)) {
           row.originalIndex = index;
         }
 
@@ -637,7 +637,7 @@
 
       //take care of default sort on mount
       if (this.defaultSortBy) {
-        for (let [index, col] of this.columns.entries()) {
+        for (let [index, col] of Object.entries(this.columns)) {
           if (col.field === this.defaultSortBy.field) {
             this.sortColumn = index;
             this.sortType = this.defaultSortBy.type || 'asc';
