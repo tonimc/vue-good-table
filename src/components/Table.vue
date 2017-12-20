@@ -15,7 +15,12 @@
         :rtl="rtl"
         :total="processedRows.length"
         @page-changed="pageChanged"
-        @per-page-changed="perPageChanged"></vue-good-pagination>
+        @per-page-changed="perPageChanged"
+        :nextText="nextText"
+        :prevText="prevText"
+        :rowsPerPageText="rowsPerPageText"
+        :ofText="ofText"
+        :allText="allText"></vue-good-pagination>
 
       <table ref="table" :class="styleClass">
         <thead>
@@ -23,7 +28,7 @@
             <td :colspan="columnsLength">
               <div class="global-search">
                 <span class="global-search-icon">
-                  <img src="../images/search_icon.png" alt="Search Icon" />
+                  <div class="magnifying-glass"></div>
                 </span>
                 <input type="text" class="form-control global-search-input" :placeholder="globalSearchPlaceholder" v-model="globalSearchTerm" @keyup.enter="searchTable()" />
               </div>
@@ -171,7 +176,13 @@
       externalSearchQuery: {default: null},
 
       // text options
-      globalSearchPlaceholder: {default: 'Search Table'}
+      globalSearchPlaceholder: {default: 'Search Table'},
+
+      nextText: {default: 'Next'},
+      prevText: {default: 'Prev'},
+      rowsPerPageText: {default: 'Rows per page:'},
+      ofText: {default: 'of'},
+      allText: {default: 'All'}
     },
 
     data: () => ({
@@ -702,13 +713,13 @@
       border: 1px solid #DDD;
   }
 
-  .table td, .table th:not(.line-numbers):not(.selectable) {
+  .table td, .table th:not(.line-numbers) {
     padding: .75rem 1.5rem .75rem .75rem;
     vertical-align: top;
     border-top: 1px solid #ddd;
   }
 
-  .rtl .table td, .rtl .table th:not(.line-numbers):not(.selectable) {
+  .rtl .table td, .rtl .table th:not(.line-numbers) {
     padding: .75rem .75rem .75rem 1.5rem;
   }
 
@@ -731,7 +742,7 @@
     cursor: pointer;
   }
 
-  .table input:not([type=checkbox]), .table select{
+  .table input, .table select{
     box-sizing: border-box;
     display: block;
     width: calc(100%);
@@ -867,5 +878,34 @@
   .text-disabled{
     color:  #aaa;
   }
+
+/* magnifying glass css */
+.magnifying-glass
+{
+  margin-top: 3px;
+  display: block;
+  width: 22px;
+  height: 22px;
+  border: 3px solid #ccc;
+  position: relative;
+  border-radius: 50%;
+}
+.magnifying-glass::before
+{
+  content: "";
+  display: block;
+  position: absolute;
+  right: -10px;
+  bottom: -6px;
+  background: #ccc;
+  width: 10px;
+  height: 5px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
+      -o-transform: rotate(45deg);
+}
 
 </style>
