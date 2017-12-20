@@ -662,37 +662,36 @@
 </script>
 
 <style lang="css" scoped>
+  /* Utility styles
+  ************************************************/
+  .right-align{
+    text-align: right;
+  }
 
-/* Utility styles
-************************************************/
-.right-align{
-  text-align: right;
-}
+  .left-align{
+    text-align: left;
+  }
 
-.left-align{
-  text-align: left;
-}
+  .center-align{
+    text-align: center;
+  }
 
-.center-align{
-  text-align: center;
-}
+  .pull-left{
+    float:  left !important;
+  }
 
-.pull-left{
-  float:  left !important;
-}
+  .pull-right{
+    float:  right !important;
+  }
 
-.pull-right{
-  float:  right !important;
-}
+  .clearfix::after {
+    display: block;
+    content: "";
+    clear: both;
+  }
 
-.clearfix::after {
-  display: block;
-  content: "";
-  clear: both;
-}
-
-/* Table specific styles
-************************************************/
+  /* Table specific styles
+  ************************************************/
 
   table{
     border-collapse: collapse;
@@ -706,20 +705,20 @@
   }
 
   .table.table-striped tbody tr:nth-of-type(odd) {
-      background-color: rgba(35,41,53,.05);
+    background-color: rgba(35,41,53,.05);
   }
 
   .table.table-bordered td, .table-bordered th {
-      border: 1px solid #DDD;
+    border: 1px solid #DDD;
   }
 
-  .table td, .table th:not(.line-numbers) {
+  .table td, .table th:not(.line-numbers):not(.selectable) {
     padding: .75rem 1.5rem .75rem .75rem;
     vertical-align: top;
     border-top: 1px solid #ddd;
   }
 
-  .rtl .table td, .rtl .table th:not(.line-numbers) {
+  .rtl .table td, .rtl .table th:not(.line-numbers):not(.selectable) {
     padding: .75rem .75rem .75rem 1.5rem;
   }
 
@@ -742,7 +741,7 @@
     cursor: pointer;
   }
 
-  .table input, .table select{
+  .table input:not([type=checkbox]), .table select{
     box-sizing: border-box;
     display: block;
     width: calc(100%);
@@ -807,22 +806,22 @@
     margin-top:  8px;
   }
 
-.responsive {
-  width: 100%;
-  overflow-x: scroll;
-}
+  .responsive {
+    width: 100%;
+    overflow-x: scroll;
+  }
 
-/* Table header specific styles
-************************************************/
+  /* Table header specific styles
+  ************************************************/
 
-.table-header{
-  padding:  .75rem;
-}
+  .table-header{
+    padding:  .75rem;
+  }
 
-.table-header .table-title{
-  margin:  0px;
-  font-size: 18px;
-}
+  .table-header .table-title{
+    margin:  0px;
+    font-size: 18px;
+  }
 
   /* Global Search
   **********************************************/
@@ -841,7 +840,7 @@
     opacity: 0.5;
   }
   table .global-search-input{
-   width:  calc(100% - 30px);
+    width:  calc(100% - 30px);
   }
 
   /* Line numbers
@@ -879,33 +878,33 @@
     color:  #aaa;
   }
 
-/* magnifying glass css */
-.magnifying-glass
-{
-  margin-top: 3px;
-  display: block;
-  width: 22px;
-  height: 22px;
-  border: 3px solid #ccc;
-  position: relative;
-  border-radius: 50%;
-}
-.magnifying-glass::before
-{
-  content: "";
-  display: block;
-  position: absolute;
-  right: -10px;
-  bottom: -6px;
-  background: #ccc;
-  width: 10px;
-  height: 5px;
-  border-radius: 2px;
-  transform: rotate(45deg);
-  -webkit-transform: rotate(45deg);
-    -moz-transform: rotate(45deg);
-      -ms-transform: rotate(45deg);
-      -o-transform: rotate(45deg);
-}
+  /* magnifying glass css */
+  .magnifying-glass
+  {
+    margin-top: 3px;
+    display: block;
+    width: 22px;
+    height: 22px;
+    border: 3px solid #ccc;
+    position: relative;
+    border-radius: 50%;
+  }
+  .magnifying-glass::before
+  {
+    content: "";
+    display: block;
+    position: absolute;
+    right: -10px;
+    bottom: -6px;
+    background: #ccc;
+    width: 10px;
+    height: 5px;
+    border-radius: 2px;
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+      -moz-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        -o-transform: rotate(45deg);
+  }
 
 </style>
