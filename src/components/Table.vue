@@ -87,6 +87,7 @@
 
         <tbody>
           <tr
+            v-if="!loading"
             v-for="(row, index) in paginated"
             :key="index"
             :class="getRowStyleClass(row)"
@@ -105,16 +106,20 @@
             </slot>
             <slot name="table-row-after" :row="row" :index="index"></slot>
           </tr>
-          <tr v-if="processedRows.length === 0">
+          <tr v-if="processedRows.length === 0 && !loading">
+            <td :colspan="columns.length">
+              <slot name="emptystate">
+                <div class="center-align text-disabled">
+                  No data for table.
+                </div>
+              </slot>
+            </td>
+          </tr>
+          <tr v-if="loading">
             <td :colspan="columns.length">
               <slot name="loadingstate" v-if="loading">
                 <div class="center-align text-disabled">
                   Loading data for table.
-                </div>
-              </slot>
-              <slot name="emptystate" v-if="!loading">
-                <div class="center-align text-disabled">
-                  No data for table.
                 </div>
               </slot>
             </td>
