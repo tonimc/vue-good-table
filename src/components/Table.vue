@@ -1,9 +1,11 @@
 <template>
   <div class="good-table" :class="{'rtl': rtl}">
     <div :class="{'responsive': responsive}">
-      <div v-if="title" class="table-header clearfix">
+      <div v-if="title || $slots['table-actions']" class="table-header clearfix">
         <h2 class="table-title pull-left">{{title}}</h2>
         <div class="actions pull-right">
+          <slot name="table-actions">
+          </slot>
         </div>
       </div>
 
@@ -13,15 +15,20 @@
         :rtl="rtl"
         :total="processedRows.length"
         @page-changed="pageChanged"
-        @per-page-changed="perPageChanged"></vue-good-pagination>
+        @per-page-changed="perPageChanged"
+        :nextText="nextText"
+        :prevText="prevText"
+        :rowsPerPageText="rowsPerPageText"
+        :ofText="ofText"
+        :allText="allText"></vue-good-pagination>
 
       <table ref="table" :class="styleClass">
         <thead>
           <tr v-if="globalSearch && externalSearchQuery == null">
-            <td :colspan="lineNumbers ? columns.length + 1: columns.length">
+            <td :colspan="columnsLength">
               <div class="global-search">
                 <span class="global-search-icon">
-                  <img src="../images/search_icon.png" alt="Search Icon" />
+                  <div class="magnifying-glass"></div>
                 </span>
                 <input type="text" class="form-control global-search-input" :placeholder="globalSearchPlaceholder" v-model="globalSearchTerm" @keyup.enter="searchTable()" />
               </div>
@@ -29,6 +36,9 @@
           </tr>
           <tr>
             <th v-if="lineNumbers" class="line-numbers"></th>
+            <th v-if="selectable" class="selectable">
+              <input type="checkbox" :disabled="!filteredRows.length" :checked="selectedRows.length > 0 && selectedRows.length === filteredRows.length" @click="selectAllClicked">
+            </th>
             <th v-for="(column, index) in columns"
               :key="column.field"
               @click="sort(index)"
@@ -43,6 +53,8 @@
           </tr>
           <tr v-if="hasFilterRow">
             <th v-if="lineNumbers"></th>
+            <th v-if="selectable" class="selectable">
+            </th>
             <th v-for="(column, index) in columns"
               :key="column.field"
               v-if="!column.hidden">
@@ -87,12 +99,14 @@
 
         <tbody>
           <tr
-            v-if="!loading"
             v-for="(row, index) in paginated"
             :key="index"
             :class="getRowStyleClass(row)"
             @click="click(row, index)">
             <th v-if="lineNumbers" class="line-numbers">{{ getCurrentIndex(index) }}</th>
+            <td v-if="selectable" class="selectable">
+              <input type="checkbox" :checked="isRowSelected(row)" @click="selectOneClicked(row, $event.target.checked)">
+            </td>
             <slot name="table-row-before" :row="row" :index="index"></slot>
             <slot name="table-row" :row="row" :formattedRow="formattedRow(row)" :index="index">
               <td
@@ -100,14 +114,15 @@
                 :key="column.field"
                 :class="getClasses(i, 'td')"
                 v-if="!column.hidden && column.field">
-                <span v-if="!column.html">{{ collectFormatted(row, column) }}</span>
                 <span v-if="column.html" v-html="collect(row, column.field)"></span>
+                <router-link v-if="column.route" :to="{ name: column.route.name, params: routeParams(row, column)}">{{ collectFormatted(row, column) }}</router-link>
+                <span v-if="!column.route && !column.html">{{ collectFormatted(row, column) }}</span>
               </td>
             </slot>
             <slot name="table-row-after" :row="row" :index="index"></slot>
           </tr>
-          <tr v-if="processedRows.length === 0 && !loading">
-            <td :colspan="columns.length">
+          <tr v-if="processedRows.length === 0">
+            <td :colspan="columnsLength">
               <slot name="emptystate">
                 <div class="center-align text-disabled">
                   No data for table.
@@ -133,7 +148,12 @@
         :rtl="rtl"
         :total="processedRows.length"
         @page-changed="pageChanged"
-        @per-page-changed="perPageChanged"></vue-good-pagination>
+        @per-page-changed="perPageChanged"
+        :nextText="nextText"
+        :prevText="prevText"
+        :rowsPerPageText="rowsPerPageText"
+        :ofText="ofText"
+        :allText="allText"></vue-good-pagination>
     </div>
   </div>
 </template>
@@ -155,6 +175,7 @@
       onClick: {},
       perPage: {},
       sortable: {default: true},
+      selectable: {default: false},
       paginate: {default: false},
       paginateOnTop: {default: false},
       lineNumbers: {default: false},
@@ -170,7 +191,13 @@
       externalSearchQuery: {default: null},
 
       // text options
-      globalSearchPlaceholder: {default: 'Search Table'}
+      globalSearchPlaceholder: {default: 'Search Table'},
+
+      nextText: {default: 'Next'},
+      prevText: {default: 'Prev'},
+      rowsPerPageText: {default: 'Rows per page:'},
+      ofText: {default: 'of'},
+      allText: {default: 'All'}
     },
 
     data: () => ({
@@ -181,6 +208,7 @@
       globalSearchTerm: '',
       columnFilters: {},
       filteredRows: [],
+      selectedRows: [],
       timer: null,
       forceSearch: false,
       sortChanged: false,
@@ -288,6 +316,14 @@
         return formattedRow;
       },
 
+      routeParams(obj,  column) {
+        const params = {};
+        for (let param in column.route.params) {
+          params[param] = obj.hasOwnProperty(column.route.params[param]) ? obj[column.route.params[param]] : column.route.params[param];
+        }
+        return params;
+      },
+
       //Check if a column is sortable.
       isSortableColumn(index) {
         const sortable = this.columns[index].sortable;
@@ -332,11 +368,7 @@
 
       //method to filter rows
       filterRows() {
-        var computedRows = JSON.parse(JSON.stringify(this.rows));
-        // we need to preserve the original index of rows so lets do that
-        for(const [index, row] of computedRows.entries()) {
-          row.originalIndex = index;
-        }
+        var computedRows = this.originalRows;
 
         if(this.hasFilterRow) {
           for (var col of this.columns){
@@ -371,6 +403,7 @@
           }
         }
         this.filteredRows = computedRows;
+        this.updateSelectedRows();
       },
 
       //get column's defined placeholder or default one
@@ -396,6 +429,50 @@
           classes += ' ' + rowStyleClasses;
         }
         return classes;
+      },
+
+      selectAllClicked(event) {
+        const checked = event.target.checked;
+        if (checked) {
+          this.selectedRows = this.filteredRows.map(item => item.originalIndex);
+        } else {
+          this.selectedRows = [];
+        }
+        this.selectedRowsChanged();
+      },
+
+      selectOneClicked(item, checked) {
+        if (checked) {
+          this.selectedRows.push(item.originalIndex);
+        } else {
+          this.selectedRows.splice(this.selectedRows.findIndex(index  => item.originalIndex === index), 1);
+        }
+        this.selectedRowsChanged();
+      },
+
+      isRowSelected(item) {
+        return this.selectedRows.indexOf(item.originalIndex) >= 0;
+      },
+
+      selectedRowsChanged() {
+        this.$emit('selectedRows', {selectedRows: this.selectedRows.map(index => this.rows[index])});
+      },
+
+      updateSelectedRows() {
+        if (this.selectedRows.length > 0) {
+          this.selectedRows = [];
+          this.selectedRowsChanged();
+        }
+//        const newSelectedRows = [];
+//        this.filteredRows.forEach(item => {
+//          if (this.selectedRows.indexOf(item.originalIndex) > -1) {
+//            newSelectedRows.push(item.originalIndex);
+//          }
+//        });
+//        if (newSelectedRows.length !== this.selectedRows.length ) {
+//          this.selectedRows = newSelectedRows;
+//          this.selectedRowsChanged();
+//        }
       }
     },
 
@@ -412,7 +489,6 @@
         },
         deep: true
       }
-
     },
 
     computed: {
@@ -465,7 +541,7 @@
         // take care of the global filter here also
         if (this.globalSearchAllowed) {
           var filteredRows = [];
-          for (var row of this.rows) {
+          for (var row of this.originalRows) {
             for(var col of this.columns) {
               if (String(this.collectFormatted(row, col)).toLowerCase()
                   .search(this.searchTerm.toLowerCase()) > -1) {
@@ -558,16 +634,28 @@
           paginatedRows = paginatedRows.slice(pageStart, pageEnd);
         }
         return paginatedRows;
+      },
+
+      columnsLength() {
+        const numbers = this.lineNumbers ? 1 : 0;
+        const checboxs = this.selectable ? 1 : 0;
+        return this.columns.length + numbers + checboxs;
+      },
+
+      originalRows() {
+        const rows = JSON.parse(JSON.stringify(this.rows));
+
+        // we need to preserve the original index of rows so lets do that
+        for(const [index, row] of rows.entries()) {
+          row.originalIndex = index;
+        }
+
+        return rows;
       }
     },
 
     mounted() {
-      this.filteredRows = JSON.parse(JSON.stringify(this.rows));
-
-      // we need to preserve the original index of rows so lets do that
-      for(const [index, row] of this.filteredRows.entries()) {
-        row.originalIndex = index;
-      }
+      this.filteredRows = this.originalRows;
 
       if (this.perPage) {
         this.currentPerPage = this.perPage;
@@ -589,37 +677,36 @@
 </script>
 
 <style lang="css" scoped>
+  /* Utility styles
+  ************************************************/
+  .right-align{
+    text-align: right;
+  }
 
-/* Utility styles
-************************************************/
-.right-align{
-  text-align: right;
-}
+  .left-align{
+    text-align: left;
+  }
 
-.left-align{
-  text-align: left;
-}
+  .center-align{
+    text-align: center;
+  }
 
-.center-align{
-  text-align: center;
-}
+  .pull-left{
+    float:  left !important;
+  }
 
-.pull-left{
-  float:  left !important;
-}
+  .pull-right{
+    float:  right !important;
+  }
 
-.pull-right{
-  float:  right !important;
-}
+  .clearfix::after {
+    display: block;
+    content: "";
+    clear: both;
+  }
 
-.clearfix::after {
-  display: block;
-  content: "";
-  clear: both;
-}
-
-/* Table specific styles
-************************************************/
+  /* Table specific styles
+  ************************************************/
 
   table{
     border-collapse: collapse;
@@ -633,20 +720,20 @@
   }
 
   .table.table-striped tbody tr:nth-of-type(odd) {
-      background-color: rgba(35,41,53,.05);
+    background-color: rgba(35,41,53,.05);
   }
 
   .table.table-bordered td, .table-bordered th {
-      border: 1px solid #DDD;
+    border: 1px solid #DDD;
   }
 
-  .table td, .table th:not(.line-numbers) {
+  .table td, .table th:not(.line-numbers):not(.selectable) {
     padding: .75rem 1.5rem .75rem .75rem;
     vertical-align: top;
     border-top: 1px solid #ddd;
   }
 
-  .rtl .table td, .rtl .table th:not(.line-numbers) {
+  .rtl .table td, .rtl .table th:not(.line-numbers):not(.selectable) {
     padding: .75rem .75rem .75rem 1.5rem;
   }
 
@@ -669,7 +756,7 @@
     cursor: pointer;
   }
 
-  .table input, .table select{
+  .table input:not([type=checkbox]), .table select{
     box-sizing: border-box;
     display: block;
     width: calc(100%);
@@ -734,22 +821,22 @@
     margin-top:  8px;
   }
 
-.responsive {
-  width: 100%;
-  overflow-x: scroll;
-}
+  .responsive {
+    width: 100%;
+    overflow-x: scroll;
+  }
 
-/* Table header specific styles
-************************************************/
+  /* Table header specific styles
+  ************************************************/
 
-.table-header{
-  padding:  .75rem;
-}
+  .table-header{
+    padding:  .75rem;
+  }
 
-.table-header .table-title{
-  margin:  0px;
-  font-size: 18px;
-}
+  .table-header .table-title{
+    margin:  0px;
+    font-size: 18px;
+  }
 
   /* Global Search
   **********************************************/
@@ -768,7 +855,7 @@
     opacity: 0.5;
   }
   table .global-search-input{
-   width:  calc(100% - 30px);
+    width:  calc(100% - 30px);
   }
 
   /* Line numbers
@@ -782,12 +869,57 @@
     text-align: center;
   }
 
+  /* Selectable
+  **********************************************/
+  table th.selectable, td.selectable {
+    background-color: rgba(35,41,53,0.05);
+    padding: .75rem .75rem .75rem 1.5rem;
+    padding-left:  3px;
+    padding-right:  3px;
+    word-wrap: break-word;
+    width: 45px;
+    text-align: center;
+  }
+
+  table th.selectable input[disabled], td.selectable input[disabled] {
+    cursor: not-allowed;
+  }
+
   .good-table.rtl{
     direction: rtl;
   }
 
   .text-disabled{
     color:  #aaa;
+  }
+
+  /* magnifying glass css */
+  .magnifying-glass
+  {
+    margin-top: 3px;
+    display: block;
+    width: 22px;
+    height: 22px;
+    border: 3px solid #ccc;
+    position: relative;
+    border-radius: 50%;
+  }
+  .magnifying-glass::before
+  {
+    content: "";
+    display: block;
+    position: absolute;
+    right: -10px;
+    bottom: -6px;
+    background: #ccc;
+    width: 10px;
+    height: 5px;
+    border-radius: 2px;
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+      -moz-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        -o-transform: rotate(45deg);
   }
 
 </style>
