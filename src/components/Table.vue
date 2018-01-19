@@ -1,8 +1,10 @@
 <template>
   <div class="good-table" :class="{'rtl': rtl}">
     <div :class="{'responsive': responsive}">
-      <div v-if="title || $slots['table-actions']" class="table-header clearfix">
-        <h2 class="table-title pull-left">{{title}}</h2>
+      <div v-if="title || $slots['table-title'] || $slots['table-actions']" class="table-header clearfix">
+        <slot name="table-title">
+          <h2 class="table-title pull-left">{{title}}</h2>
+        </slot>
         <div class="actions pull-right">
           <slot name="table-actions">
           </slot>
