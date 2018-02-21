@@ -117,7 +117,7 @@
                 :class="getClasses(i, 'td')"
                 v-if="!column.hidden && column.field">
                 <span v-if="column.html" v-html="collect(row, column.field)"></span>
-                <router-link v-if="column.route" :to="{ name: column.route.name, params: routeParams(row, column)}">{{ collectFormatted(row, column) }}</router-link>
+                <router-link v-if="column.route" :to="{ name: column.route.name, params: routeParams(row, column), query: routeQueries(row, column)}">{{ collectFormatted(row, column) }}</router-link>
                 <span v-if="!column.route && !column.html">{{ collectFormatted(row, column) }}</span>
               </td>
             </slot>
@@ -322,6 +322,14 @@
         const params = {};
         for (let param in column.route.params) {
           params[param] = obj.hasOwnProperty(column.route.params[param]) ? obj[column.route.params[param]] : column.route.params[param];
+        }
+        return params;
+      },
+
+      routeQueries(obj,  column) {
+        const params = {};
+        for (let param in column.route.query) {
+          params[param] = obj.hasOwnProperty(column.route.query[param]) ? obj[column.route.query[param]] : column.route.query[param];
         }
         return params;
       },
